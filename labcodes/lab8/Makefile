@@ -326,7 +326,7 @@ qemu-nox: $(UCOREIMG) $(SWAPIMG) $(SFSIMG)
 monitor: $(UCOREIMG) $(SWAPING) $(SFSIMG)
 	$(V)$(QEMU)  -no-reboot  -monitor stdio $(QEMUOPTS) -serial null
 
-TERMINAL := gnome-terminal
+TERMINAL        :=xterm -fa "Monospace" -fs 14
 
 debug: $(UCOREIMG) $(SWAPIMG) $(SFSIMG)
 	$(V)$(QEMU) -S -s -parallel stdio $(QEMUOPTS) -serial null &

@@ -216,7 +216,7 @@ qemu: $(UCOREIMG)
 qemu-nox: targets
 	$(V)$(QEMU) -serial mon:stdio $(QEMUOPTS) -nographic
 
-TERMINAL := gnome-terminal
+TERMINAL        :=xterm -fa "Monospace" -fs 14
 
 debug: $(UCOREIMG)
 	$(V)$(QEMU) -S -s -parallel stdio $(QEMUOPTS) -serial null &
