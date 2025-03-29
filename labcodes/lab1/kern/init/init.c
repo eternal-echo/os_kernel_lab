@@ -37,7 +37,7 @@ kern_init(void) {
 
     //LAB1: CAHLLENGE 1 If you try to do it, uncomment lab1_switch_test()
     // user/kernel mode switch test
-    //lab1_switch_test();
+    lab1_switch_test();
 
     /* do nothing */
     while (1);
@@ -81,14 +81,51 @@ lab1_print_cur_status(void) {
     round ++;
 }
 
+/**
+ * @brief 切换到用户态的函数
+ * @details 通过中断的方式从内核态切换到用户态
+ *          具体步骤如下:
+ *          1. 在栈上预留8字节空间，用于保存用户态的ss和esp
+ *          2. 触发T_SWITCH_TOU中断，在中断处理过程中完成特权级切换
+ *          3. 恢复栈指针，使其指向正确的位置
+ * 
+ * @note 该函数使用内联汇编实现
+ *       T_SWITCH_TOU是预定义的中断号，用于触发特权级切换
+ *       栈的调整是为了模拟中断发生时的硬件压栈操作
+ */
 static void
 lab1_switch_to_user(void) {
     //LAB1 CHALLENGE 1 : TODO
+	asm volatile (
+	    "sub $0x8, %%esp \n"
+	    "int %0 \n"
+	    "movl %%ebp, %%esp"
+	    : 
+	    : "i"(T_SWITCH_TOU)
+	);
 }
 
+/**
+ * @brief 切换到内核态的函数
+ * @details 通过中断的方式从用户态切换到内核态
+ *          具体步骤如下:
+ *          1. 直接触发T_SWITCH_TOK中断，在中断处理过程中完成特权级切换
+ *          2. 由于是从低特权级到高特权级，不需要预留栈空间
+ *          3. 恢复栈指针，使其指向正确的位置
+ * 
+ * @note 该函数使用内联汇编实现
+ *       T_SWITCH_TOK是预定义的中断号，用于触发特权级切换
+ *       与switch_to_user不同，这里不需要预留栈空间
+ */
 static void
 lab1_switch_to_kernel(void) {
     //LAB1 CHALLENGE 1 :  TODO
+    asm volatile (
+        "int %0 \n"            // 触发T_SWITCH_TOK中断，切换到内核态
+        "movl %%ebp, %%esp \n" // 恢复栈指针
+        : 
+        : "i"(T_SWITCH_TOK)    // 中断号作为立即数输入
+    );
 }
 
 static void

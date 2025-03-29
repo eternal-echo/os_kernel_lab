@@ -288,6 +288,30 @@ read_eip(void) {
  * Note that, the length of ebp-chain is limited. In boot/bootasm.S, before jumping
  * to the kernel entry, the value of ebp has been set to zero, that's the boundary.
  * */
+/*
++|  栈底方向    | 高位地址
+ |    ...       |
+ |    ...       |
+ |  参数3       |
+ |  参数2       |
+ |  参数1       |
+ |  返回地址     |
+ |  上一层[ebp]  | <-------- [ebp]
+ |  局部变量     |  低位地址
+
+
+ 栈从高地址 → 低地址增长（向下）
+
+    ┌──────────────┐ ← ebp + 8：第1个参数
+    │ arg1         │
+    ├──────────────┤ ← ebp + 4：返回地址（ret addr）
+    │ return addr  │ ← eip 就是这里跳回去
+    ├──────────────┤ 
+    │ old ebp      │ ← ebp：保存的上一个 ebp（调用者的栈底）
+    ├──────────────┤
+    │ 局部变量     │ ← esp（栈顶）向下增长
+    └──────────────┘
+*/
 void
 print_stackframe(void) {
      /* LAB1 YOUR CODE : STEP 1 */
@@ -302,5 +326,23 @@ print_stackframe(void) {
       *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]
       *                   the calling funciton's ebp = ss:[ebp]
       */
+    // 读取当前栈帧的ebp和eip
+    uint32_t ebp = read_ebp();
+    uint32_t eip = read_eip();
+    for(uint32_t i = 0; ebp != 0 && i < STACKFRAME_DEPTH; i++)
+    {
+        // 读取
+        cprintf("ebp:0x%08x eip:0x%08x args:", ebp, eip);
+        uint32_t* args = (uint32_t*)ebp + 2 ;
+        for(uint32_t j = 0; j < 4; j++)
+            cprintf("0x%08x ", args[j]);
+        cprintf("\n");
+        // eip指向异常指令的下一条指令，所以要减1
+        print_debuginfo(eip-1);
+        // 将ebp 和eip设置为上一个栈帧的ebp和eip
+        //  注意要先设置eip后设置ebp，否则当ebp被修改后，eip就无法找到正确的位置
+        eip = *((uint32_t*)ebp + 1);
+        ebp = *(uint32_t*)ebp;
+    }
 }
 

@@ -4,15 +4,20 @@
 #include <kmonitor.h>
 #include <kdebug.h>
 
-/* *
- * Simple command-line kernel monitor useful for controlling the
- * kernel and exploring the system interactively.
- * */
+/**
+ * @brief 简单的命令行内核监视器，用于控制内核和交互式地探索系统
+ * @note 这个结构定义了kernel monitor的基本命令框架，被整个内核调试系统使用
+ */
 
+/* 命令结构体：定义了内核监视器支持的命令格式 */
 struct command {
-    const char *name;
-    const char *desc;
-    // return -1 to force monitor to exit
+    const char *name;    // 命令名称
+    const char *desc;    // 命令描述
+    // 命令处理函数指针，返回-1时强制退出监视器
+    // @param argc 参数数量
+    // @param argv 参数数组
+    // @param tf   中断帧指针
+    // @return int 返回值，-1表示退出监视器
     int(*func)(int argc, char **argv, struct trapframe *tf);
 };
 
@@ -29,24 +34,33 @@ static struct command commands[] = {
 #define MAXARGS         16
 #define WHITESPACE      " \t\n\r"
 
-/* parse - parse the command buffer into whitespace-separated arguments */
+/**
+ * @brief 解析命令缓冲区为以空白字符分隔的参数数组
+ * @param buf   输入的命令字符串
+ * @param argv  解析后的参数数组
+ * @return int  返回解析得到的参数个数
+ * @note 该函数用于将输入字符串分割成参数数组，供命令执行使用
+ */
 static int
 parse(char *buf, char **argv) {
     int argc = 0;
     while (1) {
-        // find global whitespace
+        // 跳过连续的空白字符，并将其替换为字符串结束符'\0'
         while (*buf != '\0' && strchr(WHITESPACE, *buf) != NULL) {
             *buf ++ = '\0';
         }
+        // 如果已到达字符串末尾，结束解析
         if (*buf == '\0') {
             break;
         }
 
-        // save and scan past next arg
+        // 保存参数指针并继续扫描
         if (argc == MAXARGS - 1) {
             cprintf("Too many arguments (max %d).\n", MAXARGS);
         }
+        // 保存当前参数的起始位置
         argv[argc ++] = buf;
+        // 跳过当前参数的所有非空白字符
         while (*buf != '\0' && strchr(WHITESPACE, *buf) == NULL) {
             buf ++;
         }
@@ -54,23 +68,31 @@ parse(char *buf, char **argv) {
     return argc;
 }
 
-/* *
- * runcmd - parse the input string, split it into separated arguments
- * and then lookup and invoke some related commands/
- * */
+/**
+ * @brief 执行命令行输入的命令
+ * @param buf  输入的命令字符串
+ * @param tf   中断帧指针
+ * @return int 执行结果，-1表示退出监视器
+ * @note 该函数是kernel monitor的核心功能函数，负责命令的解析和分发
+ */
 static int
 runcmd(char *buf, struct trapframe *tf) {
     char *argv[MAXARGS];
+    // 解析命令字符串，获取参数个数和参数数组
     int argc = parse(buf, argv);
     if (argc == 0) {
         return 0;
     }
+    
+    // 遍历命令表，查找匹配的命令并执行
     int i;
     for (i = 0; i < NCOMMANDS; i ++) {
         if (strcmp(commands[i].name, argv[0]) == 0) {
+            // 调用对应的命令处理函数，传入去除命令名的参数
             return commands[i].func(argc - 1, argv + 1, tf);
         }
     }
+    // 未找到匹配的命令，打印错误信息
     cprintf("Unknown command '%s'\n", argv[0]);
     return 0;
 }
