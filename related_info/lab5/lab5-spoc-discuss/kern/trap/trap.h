@@ -57,28 +57,35 @@ struct pushregs {
     uint32_t reg_eax;
 };
 
+/**
+ * @brief 中断帧结构体
+ * 
+ * 保存中断发生时的寄存器状态和相关信息。
+ * 当中断或异常发生时，CPU会自动压入一些信息，其余信息需手动保存。
+ * 该结构从底向上反映了压栈的顺序。
+ */
 struct trapframe {
-    struct pushregs tf_regs;
-    uint16_t tf_gs;
-    uint16_t tf_padding0;
-    uint16_t tf_fs;
-    uint16_t tf_padding1;
-    uint16_t tf_es;
-    uint16_t tf_padding2;
-    uint16_t tf_ds;
-    uint16_t tf_padding3;
-    uint32_t tf_trapno;
-    /* below here defined by x86 hardware */
-    uint32_t tf_err;
-    uintptr_t tf_eip;
-    uint16_t tf_cs;
-    uint16_t tf_padding4;
-    uint32_t tf_eflags;
-    /* below here only when crossing rings, such as from user to kernel */
-    uintptr_t tf_esp;
-    uint16_t tf_ss;
-    uint16_t tf_padding5;
-} __attribute__((packed));
+    struct pushregs tf_regs;    // 通用寄存器，由pusha指令压入
+    uint16_t tf_gs;             // 段寄存器: GS
+    uint16_t tf_padding0;       // 填充以对齐
+    uint16_t tf_fs;             // 段寄存器: FS
+    uint16_t tf_padding1;       // 填充以对齐
+    uint16_t tf_es;             // 段寄存器: ES
+    uint16_t tf_padding2;       // 填充以对齐
+    uint16_t tf_ds;             // 段寄存器: DS
+    uint16_t tf_padding3;       // 填充以对齐
+    uint32_t tf_trapno;         // 中断号，需手动保存
+    /* 以下由x86硬件自动压入 */
+    uint32_t tf_err;            // 错误码(如果有的话)
+    uintptr_t tf_eip;          // 指令指针
+    uint16_t tf_cs;            // 代码段寄存器
+    uint16_t tf_padding4;      // 填充以对齐
+    uint32_t tf_eflags;        // 标志寄存器
+    /* 以下仅在特权级发生变化时(如从用户态到内核态)才会压入 */
+    uintptr_t tf_esp;          // 用户态栈指针
+    uint16_t tf_ss;            // 用户态栈段寄存器
+    uint16_t tf_padding5;      // 填充以对齐
+} __attribute__((packed));     // 按实际占用大小进行内存对齐
 
 void idt_init(void);
 void print_trapframe(struct trapframe *tf);

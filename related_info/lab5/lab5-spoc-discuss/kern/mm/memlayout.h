@@ -20,9 +20,22 @@
 #define DPL_KERNEL  (0)
 #define DPL_USER    (3)
 
+/**
+ * @brief 内核和用户空间的段选择子定义
+ * 这些定义用于设置段寄存器(如CS、DS)以切换特权级和访问权限
+ * 格式: 段描述符 | 特权级
+ */
+
+/* 内核代码段选择子: 内核文本段描述符 + 内核特权级(0) */
 #define KERNEL_CS   ((GD_KTEXT) | DPL_KERNEL)
+
+/* 内核数据段选择子: 内核数据段描述符 + 内核特权级(0) */
 #define KERNEL_DS   ((GD_KDATA) | DPL_KERNEL)
+
+/* 用户代码段选择子: 用户文本段描述符 + 用户特权级(3) */
 #define USER_CS     ((GD_UTEXT) | DPL_USER)
+
+/* 用户数据段选择子: 用户数据段描述符 + 用户特权级(3) */
 #define USER_DS     ((GD_UDATA) | DPL_USER)
 
 /* *

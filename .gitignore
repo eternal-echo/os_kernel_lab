@@ -3,3 +3,8 @@ os/target/*
 os/.idea/*
 Cargo.lock
 **/obj
+**/bin
+
+.check_output.log
+.gdb.in
+.qemu.out
